@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>pixivSearch</title>
+    <link href="/static/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding-top: 70px; }
+    </style>
+  </head>
+  <body>
+      <nav class="navbar navbar-default navbar-fixed-top">
+          <div class="container-fluid">
+              <div class="navbar-header">
+                  <a class="navbar-brand" href="/">pixivSearch</a>
+              </div>
+              <form class="navbar-form navbar-right" role="search" action="/search">
+                  <div class="form-group">
+                      <input type="text" class="form-control" placeholder="关键词" required name="keyword">
+                  </div>
+                  <select class="form-control" required name="number">
+                      <option value="" selected disabled>收藏数</option>
+                      <option>10</option>
+                      <option>100</option>
+                      <option>500</option>
+                      <option>1000</option>
+                      <option>5000</option>
+                      <option>10000</option>
+                  </select>
+                  <button type="submit" class="btn btn-default">搜索</button>
+              </form>
+          </div>
+      </nav>
+
+      <div class="container">
+          
+          {% for i in range(urls|length) %}
+          {% if i%3==0 %}
+          <div class="row">
+          {% endif %}
+          <div class="col-md-4">
+              <a href="{{ urls[i][1] }}" class="thumbnail" target="_blank">
+                  <img src="/imgthumb?url={{ urls[i][0] }}" alt="好像出错了" />
+              </a>
+          </div>
+          {% if i%3==2 %}
+          </div>
+          {% endif %}
+          {% endfor %}
+          
+      </div>
+    <script src="/static/bootstrap.min.js"></script>
+  </body>
+</html>
