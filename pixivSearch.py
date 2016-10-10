@@ -5,7 +5,7 @@ import requests
 import threading
 import math
 import Queue
-from bs4 import BeautifulSoup
+import re
 
 class geturl(threading.Thread):
     def __init__(self,name,keyword,number,workqueue,urls,s):
@@ -24,15 +24,12 @@ class geturl(threading.Thread):
             lock.release()
             try:
                 html = self.s.get('http://www.pixiv.net/search.php?word='+self.keyword+'&p='+str(item),timeout=100)
-                soup = BeautifulSoup(html.text,"html.parser")    
-                for li in soup.find_all('li',class_='image-item'):
-                    bookmark_a = li.find_all('a',class_='bookmark-count _ui-tooltip')
-                    if len(bookmark_a):
-                        num = int(bookmark_a[0].get_text())
-                        if num>=self.number:
-                            lock.acquire()
-                            self.urls.append([li.find_all('img',class_='_thumbnail')[0]['src'],'http://www.pixiv.net'+li.a['href']])
-                            lock.release()
+                lis = re.findall('<img src="(.*?)" class="_thumbnail">.*?<a href="/bookmark_detail.php\?illust_id=(.*?)" class="bookmark-count _ui-tooltip" data-tooltip=.*?(\w*)</a>', html.text)
+                for li in lis:
+                    if int(li[2]) >=self.number:
+                        lock.acquire()
+                        self.urls.append([li[0], 'http://www.pixiv.net/member_illust.php?mode=medium&illust_id='+li[1]])
+                        lock.release()
             except BaseException,e:
                 print 'page'+str(item)+'出错'
                 lock.acquire()
@@ -41,7 +38,7 @@ class geturl(threading.Thread):
                 
 def getlist(s,keyword,number,pages):
     workqueue = Queue.Queue()
-    threadnum = 10
+    threadnum = 100
     threads = list()
     urls = list()
 
@@ -61,8 +58,7 @@ def getlist(s,keyword,number,pages):
 def getpage(s,keyword,number):
     print '标签为 '+keyword+' 收藏数大于等于 '+str(number)+' 的链接'
     html = s.get('http://www.pixiv.net/search.php?word='+keyword)
-    soup = BeautifulSoup(html.text,"html.parser")
-    pages = (soup.find_all('span',class_='count-badge')[0].get_text())[0:-1]
+    pages = re.findall('<span class="count-badge">(\w*).*</span>', html.text)[0]
     pages = int(math.ceil(float(pages)/20))
     print '总页数为 '+str(pages)
     return pages
@@ -70,7 +66,7 @@ def getpage(s,keyword,number):
 def getsession():
     #登录pixiv
     s = requests.Session()
-    payload = {'mode':'login','return_to':'/','pixiv_id':'你的账号','pass':'你的密码','skip':'1'}
+    payload = {'mode':'login','return_to':'/','pixiv_id':'','pass':'','skip':'1'}
     s.post('https://www.pixiv.net/login.php',data=payload)
     print '获取session'
     return s
